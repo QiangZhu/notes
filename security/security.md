@@ -14,4 +14,5 @@
 	
 # Reference
 1. [Spring Security(三)--核心配置解读](https://www.iocoder.cn/Spring-Security/good-collection/)
+2. [理解OAuth2.0](http://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html)
 	
