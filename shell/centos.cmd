@@ -3,7 +3,12 @@ Ctrl+R > 输入要查找的关键字 > 按下左右方向键
 
 #获得外网IP
 curl members.3322.org/dyndns/getip
+#查公网ip
 curl ifconfig.me
+curl icanhazip.com
+
+#查找ip路由
+traceroute ifconfig.me
 
 #查询
 zcat 1.txt.tgz | grep "xxxx"
