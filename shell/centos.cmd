@@ -14,7 +14,7 @@ traceroute ifconfig.me
 zcat 1.txt.tgz | grep "xxxx"
 
 #压缩和解压
-tar -czvf kafka_2017-07-07.tar.gz server.log.2017-07-07-01 controller.log.2017-07-07-02 
+tar czvf kafka_2017-07-07.tar.gz server.log.2017-07-07-01 controller.log.2017-07-07-02 
 tar xzvf kafka_2017-07-07.tar.gz
 
 #curl
