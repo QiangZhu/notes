@@ -20,3 +20,11 @@
 # zkcli command line console 中的帮助命令
 
    help
+   
+#  create a znode called /workers
+
+    create /workers ""
+    
+ # delete z znode called /workers
+ 
+    delete /workers 
