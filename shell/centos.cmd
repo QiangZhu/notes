@@ -1,3 +1,10 @@
+#iptabls 
+centos7
+firewall-cmd --add-port=2181/tcp --permanent
+systemctl enable firewalld
+systemctl start firewalld
+systemctl status firewalld
+
 # 赋予执行权限
 chmod +x ./xxx.sh
 
