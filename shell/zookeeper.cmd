@@ -41,6 +41,12 @@
    create -e /master "master1.example.com:2223"
    ```
    
+   使用 get /master 获得元数据
+   
+   ephemeralOwner = 0x3638ac95bd60000 
+
+   其中"3638ac95bd60000"是 ephemeral所有者sessionid
+   
  # delete z znode called /workers
  
     ```
@@ -52,3 +58,12 @@
     ```
     get /master
     ```
+    
+ #  the stat command gets the attributes of a znode and allows us to set a watch
+   on the existence of the znode
+   
+   ```
+    stat /master true
+   ```
+   
+   WatchedEvent state:SyncConnected type:NodeDeleted path:/master
