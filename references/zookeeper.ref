@@ -1,0 +1,44 @@
+# Zookeepr Session 问题会导致执行结果顺序问题
+
+    Sesions offer order guarantees, which mean that requests in a session are 
+  executed in FIFO order. Typically, a client has only a single session open, so
+  its request are all executed in FIFO order. If a client has multiple concurrent
+  sessions, FIFO ordering is not necessarily perserved across the sessions.
+  Consecutive sessions of the same client, even if they don't overlap in time,
+  also do not necessarily preserve FIFO order. Here is how it can happen in this
+  case:
+    1. Client establishs a session and makes two consecutive asynchronous calls
+    to create /tasks and /workers.
+    2. First session expires.
+    3. Client establishes another session and makes an asynchronous call to 
+    create /assign.
+    In this sequence of calls, it is possible that only /tasks and /assign have
+   been created, which preserves FIFO ordering for the first session but violates
+   it across sessions.
+   
+# Implementing a primitive : locks with ZooKeeper
+
+    ONe simple example of what we can do with ZooKeeper is implement critical 
+  sections through locks. There care multiple flavors of locks(e.g., read/write
+  locks, global locks) and serveral ways to implement locks with ZooKeeper. Here
+  we discuss a simple recipe just to illustrate how applications can use ZooKeeper;
+  we do not consider other variants of locks.
+    Say that we have an application with n Processes trying to acquire a lock.
+  Recall that ZooKeeper does not expose primitives directly, so we need to use 
+  the ZooKeeper interface to manipulate zondes and implement the lock. To acquire
+  a lock,each process p tries to create a znode, say /lock. If p succeeds in 
+  creating the znode, it has the lock and can proceed to execute its critical 
+  section. One potential problem is that p could crash and never release the lock
+  In this case, no other process will ever be able to acquire the lock again, and
+  the system could seize up in a deadlock. To avoid such situation, we just have
+  to make the /lock znode ephemeral when we create it.
+    Other process that try to create /lock fail so long as the znode exists. So,
+  they watch for changes to /lock and try to acquire the lock again once they 
+  detect that /lock has been deleted. Upon receiving a notificaiton that /lock 
+  has been deleted, if a process p' is still interested in acquiring the lock, 
+  it repeats the steps of attempting to create /lock and, if another process has
+  created the zonde already,watching it.
+
+# references
+ 
+  - ZooKeeper Distributed Process Coordination.O'Reilly.2013
