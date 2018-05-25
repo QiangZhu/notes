@@ -1,4 +1,4 @@
-# Zookeepr Session 问题会导致执行结果顺序问题
+# Zookeepr Session
 
     Sesions offer order guarantees, which mean that requests in a session are 
   executed in FIFO order. Typically, a client has only a single session open, so
@@ -81,7 +81,47 @@
   zk handle is not closed, we need to figure out if we are the master before re-
   throwing the exception or asynchronously continuing the operation. This latter 
   cause is particularly tricky and requires careful design to handle properly.
+  
+ # ZooKeeper Asynchronously request / callback
  
+     The asynchronous method simpley queues the request to the ZooKeeper server.
+   Transmission happens on another thread. When responses are recevied, they are
+   processed on a dedicated callback thread. To preserve order, there a single 
+   callback thread and responses are processed in the order they are recevied.
+     Because a single thread process all callbacks, if a callback block, it blocks
+   all callbacks that follow it. This means that generally you should not do 
+   intensive operations or blocking operations in a callback. There may be times
+   when it's legitimate to use the synchronous API in a callback, but it should
+   generaly be avoided so that subsequent callbacks can be processed quickly.
+   
+# One-Time Triggers
+      A watch is a one-time trigger associated with a znode and a type of event(e.g.
+    , data is set in the znode, or the znode is deleted). When the watch the watch
+    is triggered by an event, it generates a nitification. A notification is a 
+    message to the application client that registered the watch to inform this 
+    client of the event.
+      When an application process regiesters a watch to recevie a notification,
+    the watch is triggered at most once and upon the first event that matches the 
+    condition of the watch. For example, say that the client needs to know when a 
+    given znode /z is deleted(e.g., a backup master). The client executes an ex-
+    ists operation on /z with the watch flag set and waits for the notification.
+    The notification comes in the form of a callback to the application client.
+      Each watch is associated with the session in which the client sets it. If
+    the session expires, pending watches are removed. Watches do, however, persist
+    across connections to different servers. Say that a ZooKeeper client disconnects
+    from a ZooKeeper server and connects to a different server in the ensemble.
+    The client will send a list outstanding watches. When reregiestering the 
+    watch, the server will check to see if the watched znode has changed since
+    the watch was regiested. If the znode has changed, a watch event will be sent
+    to the client; otherwise, the watch will be reregiestered at the new server.
+   
+# Miss Events with One-time triggers
+
+    An application can miss events between receiving a notification and register-
+    ing for another watch. However, this issue deserves more discussion. Missing
+    events is typically not a problem because any changes that have occurred dur-
+    ing the period between receiving a notification and regiestering a new watch
+    can be captured by reading the state of ZooKeeper directly.
   
 
 # references
