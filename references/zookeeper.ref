@@ -38,6 +38,21 @@
   has been deleted, if a process p' is still interested in acquiring the lock, 
   it repeats the steps of attempting to create /lock and, if another process has
   created the zonde already,watching it.
+  
+# ZooKeeper Manages Connections
+  
+   Don't try to manage ZooKeeper client connections yourself. The ZooKeeper 
+ client library monitors the connecton to the service and not only tells your 
+ about connection problems, But actively tries to reestablish communication. 
+   Often the library can quickly reestablish the session with minimal disruption
+ to your application. Needlessly closing and starting a new session just causes
+ more load on the system and longer availability outages.
+   Of course, the client will continually extend the expiration time as long as 
+ it keeps an active connection to a ZooKeeper server.
+   Once close is called, the session represented by the ZooKeeper object gets 
+ destoryed.
+ 
+  
 
 # references
  

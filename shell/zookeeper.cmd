@@ -74,3 +74,18 @@
    ```
    
    WatchedEvent state:SyncConnected type:NodeDeleted path:/master
+   
+ # telnet + stat to show the clients
+ 
+   ```
+     telnet 192.168.2.169 2181
+     stat
+   ```
+   
+ # telnet + dump to show the active sessions
+ 
+    ```
+      telent 192.168.2.169 2181
+      dump
+    ```
+      
