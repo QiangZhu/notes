@@ -70,6 +70,17 @@
   This is often part of applicaiton shutdown, but it may also be used in other 
   application-dependent ways. This exception literally interrupts the local client
   request processing in the process and leaves the request in an unknown state.
+    Unfortunately, in Java there aren't clear guidelines for how to deal with 
+  thread interruption, or even what it means. Sometimes the interruptions are 
+  used to signal threads that things are being shutdown and they need to clean up.
+  In other cases, an interruption is used to get control of a thread, but execut-
+  ion of the applicaition continues.
+    Handling of InterruptedExcetion depends on our context. If the interrupteEx-
+  pection will bubble up and eventually close our zk handle, we can let it go up
+  the stack and everything will get cleaned up when the handle is closed. If the
+  zk handle is not closed, we need to figure out if we are the master before re-
+  throwing the exception or asynchronously continuing the operation. This latter 
+  cause is particularly tricky and requires careful design to handle properly.
  
   
 
