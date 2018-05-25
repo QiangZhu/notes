@@ -52,6 +52,25 @@
    Once close is called, the session represented by the ZooKeeper object gets 
  destoryed.
  
+# ConnectionLossException
+
+    The ConnectionLossException occurs when a client becomes disconnected from a
+  ZooKeeper server. This is usually due to a network error, such as a network 
+  partition, or the failure of a ZooKeeper server. When this exception occurs, it
+  is unknown to the client whether the request was lost before the ZooKeeper 
+  servers processed it, or if they processed it but the client did not receive 
+  the response. As we described earlier, the ZooKeeper client library will 
+  reestablish the connection for future request, but the process must figure out
+  whether a pending request has been processed or whether it should reissue the 
+  request.
+  
+# InterruptedException
+
+    The InterruptedException is caused by a client thread calling Thread.interrupt.
+  This is often part of applicaiton shutdown, but it may also be used in other 
+  application-dependent ways. This exception literally interrupts the local client
+  request processing in the process and leaves the request in an unknown state.
+ 
   
 
 # references
