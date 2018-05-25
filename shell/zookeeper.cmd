@@ -2,8 +2,15 @@
 
     ```
     ./zkServer.sh start
-    ```
     
+    ./bin/zkServer.sh start ./conf/z1.cfg
+    ```
+# stop a server
+
+  ```
+   ./bin/zkServer.sh stop ./conf/z1.cfg
+  ```   
+
 # run in the background
 
     ```
