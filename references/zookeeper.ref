@@ -122,7 +122,37 @@
     events is typically not a problem because any changes that have occurred dur-
     ing the period between receiving a notification and regiestering a new watch
     can be captured by reading the state of ZooKeeper directly.
-  
+    
+# Watch Interface
+
+    public void process(WatchEvent event);
+    
+    - The state of the ZooKeeper session(KeeperState):
+      ```
+        Disconnected
+        SyncConnected
+        AuthFailed
+        ConnectedReadOnly
+        SaslAuthenticated
+        Expired
+      ```
+      
+     - The event type(EventType)
+       ```
+         NodeCreated
+         NodeDeleted
+         NodeDataChanged
+         NodeChildrenChanged
+         None
+       ```
+       
+     - A znode path in the case the watched event is not None
+     
+     - One important observation about watches is that currently it is not poss-
+     ible to remove them once set. The only two to remove a watch are to have it
+     triggered or for its session to be cloused or expired. This behavior is li-
+     kely to change in future versions, however, because the community has been
+     working on it for version 3.5.0.
 
 # references
  
