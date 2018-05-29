@@ -154,6 +154,56 @@
      kely to change in future versions, however, because the community has been
      working on it for version 3.5.0.
      
+# Multiop
+
+    Multiop was not in the original design of ZooKeeper, but was added in version
+  3.4.0. Multiop enables the execution of multiple ZooKeeper operations in a  
+  block atomically. The execution is atomic in the sense that either all opera-
+  tions in a multiop block succeed or all fail. For example, we can delete a pa-
+  rent zonde and its child in a multiop block. The only possible outcomes are 
+  that either both operations successd or both fail. It is not possible for the
+  parent to be deleted while leaving one of its hcildren around, or vice versa.
+    Multiop can simplify our master-worker implementation in at least one plcae.
+  When assiging a task, the master in previous examples has created the corres-
+  ponding assignment znode and the deleted the task znode under /tasks. if the 
+  master crashes before deleting the znode under /tasks, we are left with a task
+  in /tasks that has already been assigned. Using multiop, we can create the 
+  znode representing the assignment of the task under /assign and delete the 
+  zonde representing the task unser /tasks atomically. Using this approach, we
+  guarantee that no task znode under /tasks has been already assigned. If a 
+  backup takes over the role of master, is is not necessary to disambiguate the
+  tasks in /tasks: they are all unassigned.
+    Another feature that multiop offers is the possibility of checking the 
+  version of a znode to enable operations over multiple zondes that read the state
+  of ZooKeeper and write back some data-possibly a modification of what has been
+  read. The version of the znode that is checked does not change, so this call
+  enables a multiop that checks the version of z znode that is not modified. This
+  feature is useful when the changes to one or more znodes are conditional upon 
+  the version of another znode. Say that in our master-worker example, the master
+  needs to have the clients adding new tasks under a path that the master speifies.
+  For example, the master could ask clients to create new task as children of 
+  /tasks-mid, where mid is the master identifier. The master stores this path
+  as the data of the /master-path znode. A client that needs to add a new task
+  first reads /master-pth and picks its current version with Stat. Next, the client
+  creates a new task zonde under /task-mid as part of the a multiop call. and it
+  also checks that the version of /master-path matches the one it has read.
+  
+# Recoverable and Unrecoverable Failure
+
+    Rather than trying to determine causes of failures, ZooKeeper expose two cla-
+  sses of failure: recoverable and unrecoverable. Recoverable failures are trans-
+  ient and should be considered relatively normal-things happen. Brief network 
+  hiccups and server failures can cause these kinds of failures. Developers should
+  write theire code so that theire applications keep running in spite of these
+  failures.
+    Unrecoverable failure are much more problematic. These kinds of failures cause
+  the ZooKeeper handle to become inoperable. The easiest and most common way to 
+  deal with this kind of failure is to exit the application. Examples of causes 
+  of this class of failure are session timeouts, networks outages for longer than
+  the session timeout, and authentication failures.
+  
+  
+     
 
 # references
  
