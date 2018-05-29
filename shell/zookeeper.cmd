@@ -88,4 +88,16 @@
       telent 192.168.2.169 2181
       dump
     ```
+    
+ # used DigestAuthenticationProvider to generate a digest for password secret
+ 
+   ```
+     java -cp ./zookeeper-3.4.9.jar:./lib/log4j-1.2.16.jar: \
+     ./lib/slf4j-api-1.6.1.jar:./lib/slf4j-log4j12-1.6.1.jar \
+     org.apache.zookeeper.server.auth.DigestAuthenticationProvider test:test
+
+   ```
+    test:test->test:V28q/NynI4JI3Rk54h0r8O5kMug=
+# 
+     
       

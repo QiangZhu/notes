@@ -203,6 +203,69 @@
   the session timeout, and authentication failures.
   
   
+# The Exist Watch and the Disconnected Event
+
+    To make session disconnection and reestablishment a little more seamless, the
+  ZooKeeper client library will reestablish any existing watches on the new server.
+  When the client library connects to a ZooKeeper server, it will send the list of 
+  outstanding watches and the last zxid(the last state tiemstamp) it has been. 
+  The server will go through the watches and check the modification timestamps of
+  the znodes that correspond to them. If any watched znodes have a modification
+  timestamp later than the last zxid seen, the server will trigger the watch.
+    This logic works perfectly for every ZooKeeper operation except exist. The
+  exists operation is different from all other operatons because it can set a 
+  watch on a znode that does not exist. If we look closely at the watch registra-
+  tion logic in the previous paragraph, we are that there is a corner case in 
+  which we can miss a watch event.
+    Figure 5-5 illustrates the corner case that cause us to miss the creation 
+   event of a watched znode. In this example, the client is watching for the
+   creation of /event. However, just as the /event is created by another client,
+   the watching client loses its connection to ZooKeeper. During this time the 
+   other client deletes /event, so when the watching client reconnection to Zoo-
+   Keeper and reregisters its watch, the ZooKeeper erver no longer has the /event
+   znode. Thus, when it processes the regiestered watches and sees the watch for
+   /event, and sees that there is no node called /event, it simply reregiesters 
+   the watch, causing the client to miss the creation event for /event. Because
+   of this corner case, you should try to avoid watching for the creation event
+   of a znode. If you do watch for a creation event it should be for a long-lived
+   znode; otherwise, this corner case can bite you.
+   
+   
+#  Fencing Token
+
+     Another approach is to extend the coordination data provided by ZooKeeper to
+   the external device, using a technique call fencing. This is used often in 
+   distributed systems to ensure exclusive access to a resource.
+     We will show an example of implementng simple fencing using a fencing token.
+   As long as a client holds the most recent token, it can access the resource.
+     When we create a leaser znode, we get back a Stat structure. One of the 
+   members of that structures it the czxid, which is the zxid that created the 
+   znode. The zxid is a unique, monotonically increasing sequence number. We can
+   use the czxid as a fencing token.
+     When we make a request to the external resource, or when connect to the 
+   external resource, we also supply the fencing token. If the external resource
+   has recevied a request or connection with a higher fencing token, our request
+   or connecton will be rejected. This means that once a new master connects to 
+   an external resource and starts managing it, if an older master tries to do 
+   anything which the external resource, its request wiil fail; it will be fenced
+   off. Fencing has the nice benefit that it will work reliably event in the pre-
+   sence of system overload or clock drift. 
+     Figure 5-7 shows how this technique solves the scenario of Figure 5-6. When
+   c1 becomes the leader at time t1, the creation zxid of /leader znode is 3(in
+   reality, the zxid would be a much larger number). It supplies the creation 
+   zxid as the fencing token to connect with the database. Later, when c1 becomes
+   unresponsive due to overload, ZooKeeper declares c1 as failed and c2 becomes 
+   the new leader at time t2. c2 uses 4 as its fencing token because the /leader
+   zonde it created has a creation zxid of 4. At time t3, c3 starts making requests
+   to the database using its fencing token. Now weh c1's request arrives at the
+   datbase at time t4, it is rejected because its fencing token(3) is lower than
+   the highest seen fencing tokne(4), thus avoiding corruption.
+     Unfortunately, this fencing scheme requires changes to the protocol between
+   the client and the resource. There must be room in the protocol to add the 
+   zxid, and the external resource needs a persistent store to track the latest
+   zxid received.
+   
+   
      
 
 # references
