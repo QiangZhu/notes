@@ -265,9 +265,92 @@
    zxid, and the external resource needs a persistent store to track the latest
    zxid received.
    
-   
-     
+# Order in the presence of connection loss
+    Upon a connection loss event, ZooKeeper cancels pending request. For synch-
+  ronous cals the library throws an exception, while for asynchronous call the 
+  library invokes the callbacks with a return code indicating a connection loss.
+  Thie client library won't try to resubmit hte request once it has indicated to
+  the applicaiton that the connection has been lost, so it's up to the application
+  to resubmit operations that have been canceled. Consequently, the application 
+  can repy on the client library to isue al the callbacks, but it cannot rely on
+  ZooKeeper to actually carry out the operation in the event of a connection loss.
+    To understand what impat this can have on an application, let's consider the
+  following sequence of events:
+    - Applicaiotn submits a request to execute op1
+    - Client library detects a connection loss and cancels pending request to 
+      execute op1
+    - Client reconnections before the session expires
+    - Op2 is executed successfully
+    - Op1 returns with CONNETIONLOSS
+    - Appliction resubmits op1
+     In this case, the application submitted op1 and op2 in that order and got 
+  op2 to execute successfully before op1. When the application notices the con-
+  nection loss in the callback of op1, it tries to submit that request again. But
+  suppose the client does not successfully reconnect. A new call to submit op1
+  will report connection loss again, and there is a risk that the application 
+  will enter into an unbounded loop of resubmitting the op1 request without con-
+  necting. To get out of this cycle, the applicaiton could set a bound on the 
+  number of attempts, or close the handle if reconnecting takes too long.
+    In some cases, it might be important to make sure that op1 is executed 
+  successfully before op2. if op2 depends on op1 in some way, then to avoid hav-
+  ing op2 executing successfully before op1, we could simply wait for a success-
+  ful execution of op1 before submitting op2. This is the approach we have taken
+  in most of our master-worker example code, to guarantee that the request are
+  executed in order. In general, this approach of waiting ofr the result of op1
+  is safe, but it adds a performance penalty because the application needs to 
+  wait for the result of one request to submit the next one, instead of having
+  them processed concurrently.
 
+# Order with the synchronous API and multiply thread
+
+    Multithreaded applications are common these days. If you are using the syn-
+  chronous API with multiply threads, it is important to pay attention to one
+  ordering issue. A synchronous ZooKeeper call blocks until it gets a response.
+  If two or more threads submit synchronous operations to ZooKeeper concurrently,
+  they will each block until they receive a response. ZooKeeper will deliver the 
+  responses in order, but it is possible that due to thread scheduling, the result
+  of an operation submitted later will be processed first. If ZooKeeper delivers
+  responses to operations very close to each other in time, you may observe such
+  a scenario.
+    If different threads submit operations concurrently, odds are that the oper-
+  ations are not directly related and can be executed in any order without 
+  causing consistency issue.
+    But if the operations are related, the application client must take the order
+  of submission into consideration when procesing the results.    
+
+# Order when mixing synchronous and asychronous calls
+    Here's another situation where results may appear to be out of order. Say that
+  you submit two asynchronous operation, aop1 and aop2. It doesn't matter what
+  the operations are, only that they are asynchronous. In the callback of aop1,
+  you make a synchronous call, sop1. The synchronous call blocks the dispatch
+  thread of the ZooKeeper client, which causes the application client to recevie
+  the result of sop1 before reveiving the result of aop2. Consequently, the 
+  application observers the results of aop1, sop1, and aop2 in that order, which
+  is different from the submission order.
+    In general, it is not a good idea to mix synchronous and asychronous calls.
+  There are a few exceptions - for example, when starting up, you may want to 
+  make sure that some data is ZooKeeper before proceeding. It is possible to use
+  Java latches and order such mechanisms in these case, but one or more 
+  synchronous calls might also do the job.
+  
+# Data and child limits
+
+    ZooKeeper limits the amount of data transferred for eache request to 1MB by
+  default. This limit bounds the maximum amount of data for any given node and 
+  the number of children any parent znode can have. The choice of 1MB is 
+  somewhat arbitrary, in the sense that there is noting fundamental in ZooKeeper
+  that prevents it from usng a different value, larger or smaller. A limit 
+  exists, however, to keep performance high. A znode with very large data, for
+  instance, takes a long time to traverse, essentially stalling the processing
+  pipeline while requests are being executed. The same problem happens if a 
+  client executes getChildren on a znode with a large number of children.
+    The limits ZooKeeper imposes right now for data size and number of children
+  are already quite high, so you should avoid event getting close to these 
+  limits. We have enabled large limits to satify the requirements of a broader 
+  set of applications. If you have a special use case and realyy need different
+  limit, you can change them.
+  
+  
 # references
  
   - ZooKeeper Distributed Process Coordination.O'Reilly.2013

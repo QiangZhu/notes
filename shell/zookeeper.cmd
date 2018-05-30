@@ -95,9 +95,17 @@
      java -cp ./zookeeper-3.4.9.jar:./lib/log4j-1.2.16.jar: \
      ./lib/slf4j-api-1.6.1.jar:./lib/slf4j-log4j12-1.6.1.jar \
      org.apache.zookeeper.server.auth.DigestAuthenticationProvider test:test
+     
+     test:test->test:V28q/NynI4JI3Rk54h0r8O5kMug=
 
    ```
-    test:test->test:V28q/NynI4JI3Rk54h0r8O5kMug=
+    
+    ```
+      echo -n test:test | openssl dgst -binary -sha1 | openssl base64 
+   
+      V28q/NynI4JI3Rk54h0r8O5kMug=
+
+    ```
 
 # ZooKeeper ACL authentication
 
@@ -122,8 +130,8 @@
         getAcl /auth  
       ```
       
-        做了acl之后对当前的acl有效，如果close之后，需要使用addauth命令之后，才能访问
-        被acl的目录否则会报
+        做了acl之后对当前的acl有效，如果close之后，需要使用addauth命令之后，才能
+        访问被acl的目录否则会报
         Authentication is not valid   : /XXXXXXX
 
   - scheme:digest
@@ -134,4 +142,11 @@
         setAcl /digest digest:test:V28q/NynI4JI3Rk54h0r8O5kMug=:rwadc
         getAcl /digest 
       ```
-      
+     
+  - scheme:ip
+   
+    ```
+       create /111
+       setAcl /111 ip:192.168.2.111:rwcda
+       getAcl /111
+    ```    
