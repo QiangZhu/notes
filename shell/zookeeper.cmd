@@ -98,6 +98,40 @@
 
    ```
     test:test->test:V28q/NynI4JI3Rk54h0r8O5kMug=
-# 
+
+# ZooKeeper ACL authentication
+
+  ```
+     addauth scheme auth
+     getAcl path
+     setAcl path
+  
+     https://www.jianshu.com/p/147ca2533aff
      
+     scheme: world | auth | digest | host | ip 
+     
+     zkCli -server login 
+     
+  ```
+  - scheme:auth
+     
+      ```
+        create /auth auth
+        addauth digest test:test #使用acl
+        setAcl /auth auth:test:test:rwadc
+        getAcl /auth  
+      ```
+      
+        做了acl之后对当前的acl有效，如果close之后，需要使用addauth命令之后，才能访问
+        被acl的目录否则会报
+        Authentication is not valid   : /XXXXXXX
+
+  - scheme:digest
+  
+     ```
+        create /digest digest
+        addauth digest test:test #使用acl
+        setAcl /digest digest:test:V28q/NynI4JI3Rk54h0r8O5kMug=:rwadc
+        getAcl /digest 
+      ```
       
