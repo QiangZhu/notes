@@ -266,6 +266,7 @@
    zxid received.
    
 # Order in the presence of connection loss
+
     Upon a connection loss event, ZooKeeper cancels pending request. For synch-
   ronous cals the library throws an exception, while for asynchronous call the 
   library invokes the callbacks with a return code indicating a connection loss.
@@ -350,6 +351,274 @@
   set of applications. If you have a special use case and realyy need different
   limit, you can change them.
   
+
+# Curator framewrok 
+
+    - Sequential znodes
+    
+      If the server the client is connected to crashes before returning the 
+    znode name (with the sequence number) or the client simply disconnections,
+    then the client doesn't get a response even if the operation has been 
+    executed. As a consequence, the client doesn't know the path to the znode it
+    created. Recall that we use sequential znodes, for example, in recipes that
+    establish an order for participating clients. To address this problem, 
+    CreateBulder provides a withProtection call that tells the Curator client to 
+    prefix the sequential znode with a unique identifier. if the create fail, 
+    the client retries the operation, and as part of retrying it verifies 
+    whether there is a already a znode with the unique identifier.
+    
+    - Guaranteed deletes
+    
+      A similar situation occurs with delete operations. If the client
+    disconnects from the serve while executing a delete operation, it doesn't
+    know whether the delete operation has succeeded or not. If the presence of 
+    the znode being deleted indicates, for example, that a resource is locked, 
+    it is important to delete the znode to make sure that the resource is free 
+    to be used again. The Curator client provides a call that enables an
+    application to make the execution of a delete operation guaranteed. The
+    operation is guaranteed in the sense that the Curator client reexecutes the
+    operation until it succeeds, and for as long as the Curator client instance
+    is valid. To use this feature, the DeleteBuilder interface defines a 
+    guaranteed call.
+    
+#  Transactions
+
+     ZooKeeper servers process read request ( exists, getDAta, and getClilden)
+   locally. When a server receives, say, a getData request from a client, it 
+   reads tis state and returns it to the client. Becase it serves requests 
+   locally, ZooKeeper is pretty fast as sreving read-dominiated workloads. We 
+   can add more servers to the ZooKeeper ensemble to serve more read requests,
+   increading overall throughput capacity.
+     Client requests that change the state of ZooKeeper (create, delete, and 
+   setData) are forworded to the leader. The leader executes the request, 
+   producing a state update that we call transcation. Whereas the request 
+   express the operation the way the client originates it, the transaction 
+   comprises the steps taken to modify the ZooKeeper state to reflect the 
+   execution of the request.
+     Say that a client submits a setData request on a given znode /z .setData
+   should change the data of the znode and bump up the version number. So, a 
+   transaction for this request contains two important field: the new data of 
+   the znode and the new version number of the znode. When applying the 
+   transaction, a serve simply replaces the adata of /z with the data in the 
+   transaction and the version number with the value in the transaction, rather
+   than bumping it up.
+     A transaction is treated as a unit, in the sense that all changes it 
+   contains must be applied atomically. In the setData example, changing the 
+   data without an accompanying change to the version accordingly leads to 
+   trouble. Consequently, when a Zookeeper ensemble applies transactionn, it 
+   makes sure that all changes are applied atomically and there is no 
+   interference from other transactions. There is no rollback mechanism like 
+   with transactional relational databases. Instead, ZooKeeper makes sure that
+   the steps of transactions do not interfere with each other. For a long time,
+   the design used a single thread in eache server to apply transactions. 
+   Having a single thread guarantees that the transactions are applied 
+   sequentially without interference. Recently, ZooKeeper has added support for
+   multiple threads to speed up the process of applying transactions.
+     A transaction is also idempotent. That is, we can apply the same 
+   transaction twice and we will get the same result. We can even apply multiple
+   transactions multiple times and get the same result, as long as we apply them
+   in the same order every time. We take advantage of this idempotent property
+   during recovery.
+    When the leader generates a new transaction, it assign to the transaction an
+   identifier that we call a ZooKeeper transaction ID (zxid). Zxid identify 
+   transactions so that they are applied to the stae of servers in the order 
+   established by the leader. Servers also exchange zxid when electing a new 
+   leader, so they can determine which nonfaulty server has received more 
+   transactions and can sychronize their states.
+     A zxid is long(64-bit) integer split into two parts: the epoch and the 
+   counter. Each part has 32 bits. The use of epochs and counters will become
+   clear when we discuss Zab, the protocol we use to broadcast state updates to
+   servers.
+   
+# Leader Elections
+
+    The leader is server that has been chosen by an ensemble of servers and that
+  continues to have support form that ensemble. The purpose of the leader is to
+  order client requests that change the ZooKeeper state: create, setData, and 
+  delete. The leaser transforms each request into a transactions, as explained 
+  in the previous section, and proposes to the followers that the ensemble 
+  accepts and applies them in the order issued by the leader.
+    To exercise leadership, a server must hava support from a quorum of servers.
+  Quorums must intersect to avoid the problem that we call split brain: two 
+  subsets of servers making progress independently. This situation leads to 
+  inconsistent system state, and clients end up getting different results 
+  depending on which server they happen to contact. 
+    Each server starts in the LOOKING state, where it must either elect a new 
+  leader or find the existing one. If a leaser already exists, other servers
+  inform the new one which server is the leaser. At this point, the new server
+  connects to the leader and makes sure that its own state is consistent with 
+  state of the leader.
+    If an ensemble of servers, however, are all in the LOOKING state, they must
+  communicate to elect a leader. They exchange messages to converge on a common
+  choice for the leader. The server that wins this election enters the LEADING
+  state, while the other servers in the ensemble enter the FOLLOWING state.
+    The leader election messages are called leader election notifications, or
+  notifications. The protocol is extremely simple. When a server enters the 
+  LOOKING state, it sends a batch of notification messages, one to each of the
+  other servers in the ensemble. The message contains its current vote, which 
+  consists of the server's identifier(sid) and the zxid(zxid) of the most recent
+  transaction it executed. Thus, (1,5) is a vote sent by the server with a sid 
+  of 1 and a most recent zxid of 5. (For the purposes of leader election, a zxid
+  is a single number, but in some other protocols it is represented as an epoch
+  and a counter.)
+    Upon receiving a vote, a server changes its vote according to the following
+  rules:
+    1. Let voteId and voteZxid be the identifier and the zxid in the current 
+  vote of the receiver, whereas myZxid and mySid are the values of the receiver
+  itself.
+    2. if (voteZxid > myZxid) or (voteZxid = myZxid and voteId > mySid), keep 
+  the current vote.
+    3. Otherwise, change my vote by assigning myZxid to voteZxid and mySid to 
+  vote Zxid.
+    In short, the server that is most up to date wins, because it hs the most 
+   recent zxid. We'll see later that this simplifies the process of restarting a
+   quorum when a leader dies. If multiple servers have the most recent zxid, the
+   one with the highest sid wins.
+     Once a server recevies the same vote from a quorum of servers, the server 
+   declares the leader elected. If the elected leader is the server itself, it
+   starts executing the leader role. Otherwise, it becomes a follower and tries
+   to connect to the elected leader. Note that it is note guaranteed that the
+   follower will be able to connect to the elected leader. The elected leader 
+   might have crashed, for example. Once it connects, the follower and the 
+   leader sync their state, and only after syncing can the follower start 
+   processing new requests.
+   
+# Zab: Broadcasting State Updates
+
+    Upon receiving a write request, a follower forwards it to the leader. The 
+  leader executes the request speculatively and broadcast the result of the 
+  execution as a state update, in the form of a transaction. A transaction 
+  comprises the exact set of changes that a server must apply to the data tree
+  when the transaction is committed. The data tree is the data structure holding
+  the ZooKeeper state.
+    The next question to answer is how a server determines that a transaction 
+  has been committed. This followers a protocol called ZooKeeper Atomic 
+  Broadcasting protocol. Assuming that there is an active leader and it has a 
+  quorum of followers supporting its leadership, the protocol to commit a 
+  transaction is very simple, resembling a two-phrase commit:
+    1. The leaser sends a PROPOSAL message, p, to all followers.
+    2. Upon receiving p, a follower responds to the leader with an ACK, 
+  informing the leader that it has accepted the proposal.
+    3. Upon receiving acknowledgements from a quorum(the quorum includes the 
+  leader itself), the leader sends a message informing the followers to COMMIT 
+  it.
+    Before acknowledging a proposal, the follower needs to perform a couople of 
+  additional checks. The follower needs to check that the proposal is from the
+  the leader it is currently following, and that it is acknowledging proposals 
+  and committing transactions in the same order that the leader broadcasts them
+  in.
+    Zab guarantees a couple of important propertis:
+    - If the leader broadcast T and T' in that order, each server must commit T
+  before committing T'
+    - If any server commits transactions T and T' in that order, all other 
+  servers must also commit T before T'.
+    The first property guarantees that transactions are delivered in the same
+  order across server, whereas the second property guarantees that servers do
+  not skip transactions. Given that the transactions are state updates and each
+  state update depends upon the previous state update, skipping transactions 
+  could create inconsistencies. The two-phrase commit guarantees the ordering of
+  transactions. Zab records a transaction in a quorum of server. A quorum must
+  acknowledge a transaction before the leader commits it, and a follower records
+  on disk the fact that it has acknowledged the transaction.
+    Transactions can still end up on some servers and not on others, because 
+  servers can fail while trying to write a transaction to storage. ZooKeeper can
+  bring all servers up to date whenever a new quorum is created and a new leader
+  chosen.
+    ZooKeeper, however, does not expect ot have a single active leader the whole
+  time. Leaders may crash or become temporarily disconnected, so servers may 
+  need to move to a new leader to guarantee that the system remains available.
+  The notion of epochs represents the changes in leadership over time. An eposh
+  refers to the period during which a given server exercised leadership. During
+  an epoch, a leader broadcast proposals and identifies each one according to a
+  counter. Remember that each zxid includes the epoch as its first element, so
+  each zxid can easily be associated to the epoch in whick the transaction ware
+  created.
+    The epoch number increase each time a new leader election takes place. This
+  same server can be the leader for different epochs, but for the purpose of 
+  the protocol, a server exercising leadership in different epochs is perceived 
+  as a different leader. If a server s has been the leader of epoch 4 and it
+  currently the established leader of epoch 6, a follower following s in epoch 6
+  proccesses only the message s sent during epoch6. The follower may accept 
+  proposals from epoch 4 during the recovery period of epoch 6, before it starts
+  accepting new proposals for epoch 6. Such proposals, however, are sent as part
+  of epoch 6's messages.
+    Recording accepted proposals in a quorum is critical to ensure that all 
+  servers evenetually commit transactions that have been committed by one or 
+  more servers, even if the leader crashes. Detecting perfectly that leaders(or
+  any server) have crashed it very hard, if not impossible, in many settings, so
+  it is very possible to falsely suspect that a leader has crashed.
+    Most of the difficulty with implementing a broadcast protocol is related the
+  presence of concurrent leaders, not necessarily in a split-brain scenario. 
+  Multiple concurrent leaders could make servers commit transactions out of 
+  order or skip transaction altogether, whick leave servers with inconsistent
+  states. Preventing the system from ever having two servers believing they are
+  leaders concurrently is very hard. Timing issues and dropped message might 
+  lead to such scenarios, so the broadcast protocal cannot rely on this 
+  assumption. To get around this problem, Zab guarantees that:
+    - An elected leader has commited all transactinos that will ever be 
+   committed from previous epochs before it starts broadcasing new transactions.
+    - At no point in time will two servers have a quorum of supporters.
+    To implement the first requirement, a leader does not become active until 
+  makes sure that a quorum of servers agrees on the state it should start with 
+  for the new epoch. The initial state of an epoch must encompass all
+  transactions that have been previously committed, and possibly some other ones
+  that had been accepted before but not committed. It is important, though, that
+  before the leader makes any new proposals for epoch e, it commits all 
+  proposals that wille ever be committed from epochs up to and including e-1. if
+  there is a proposal lying around from epoch e' < e and it is not commited by 
+  the leader of e by the time it make the first proposal of e, the old proposal
+  is never committed.
+    The second porint is somewhat tricky because it doesn't really prevent two
+  leaders from making progress independently. Say that a leader l is leading and
+  broadcasting transactions. At some point, a quorum of servers Q believes l is
+  gone, and it elects a new leader, l'. let's say that T is a transaction that
+  was being broadcast at the tiem Q abandoned l, and that a strict subset of Q
+  has successfully record T. After l' is elected, enough process not in Q also
+  record T, forming a quorum for T. in this case, T is committed even after l'
+  has been elected. But don't worry; this is not a bug. Zab guarantees that T is
+  part of the transactions committed by l', by guaranteeing that the quorum of
+  supporters of l' contain at least one follower that has acknowledged T.  The 
+  key point here is that l' and l do not have a quorum of supporters 
+  simultaneously.
+    In the figure, l is server s5, l' is server s3, Q comprise s1 through s3, 
+  and the zxid(1,1). After receiving the second comfirmation, s5 is able to send
+  a commit message to s4 to tell it to commit the transaction. The other servers
+  ignore message from s5 once they start following s3. Note that s3 
+  acknowledged(1,1), so it si aware of the transaction when it established 
+  leadership.
+    We have just promised that Zab ensures the new leader l' does not miss(1,1),
+  but how does it happen exactly? Before becoming active, the new leader l' must
+  learn all proposals that servers in the old quorum have accepted previously,
+  and it must get a promise that these servers won't accept further proposals 
+  from previous leader. In the example , the servers forming a quorum and 
+  supporting l' promise that they won;t accept any more proposals from leader l.
+  At that point, if leader l is still able to commit any propotsal, as it does
+  with (1,1), the proposal must have been accepted by at least one server in the
+  quorum that made the promise to the new leader. Recal that quorums must
+  overlap in at least one server, so the quorum that l uses to commit and the 
+  quorum that l' talks to must have at least one server in common. Consequently,
+  l' includes (1,1) in its state and propagates it to its followers.
+    Recall that when electing a leader, servers pick the one with the highest 
+  zxid. This saves ZooKeeper from having to transfer proposals from followers to
+  the leader; it only needs to transfer state from the leader to the followers.
+  Say instead that we have at least one follower that has accepted a proposal 
+  that the leader hasn't. Before syncing up with the other followers, the leader
+  would have no recevie and accept the proposal. However, if we pick the server
+  with the highest zxid, then we can completely skip this step and jump directly
+  into bringing the follwers up to date.
+    When transitioning between epochs, ZooKeeper uses two different ways to 
+  update the followers in order to optimize the process. If the follower is not
+  too far behind the leader, the leader simply sends the missing transactions.
+  They are always the most recent transactions, because followers accept all
+  transactions in strict orfer. This update is called a DIFF in the code. If the
+  follower is lagging far behind, ZooKeeper does a full snapshot transfer, 
+  called a SNAP in the code. Doing a full snapshot transfer increases recovery
+  time, so sending a few missing transactions is preferable, but not always 
+  possible if the follower is far behind.
+    The DIFF a leader sends to a follower corresponds to the proposals that the
+  leader has in its transaction log, whereas the SNAP is the lastest valid 
+  snapshot that the leader has. 
+   
   
 # references
  
