@@ -1,3 +1,18 @@
+
+# yum
+
+  ```
+    yum history
+    
+    卸载
+    yum history undo <ID>
+  ```
+# find
+
+  ```
+    sudo find / -iname "gitlab"
+  ```
+
 #iptabls 
 centos7
 firewall-cmd --add-port=2181/tcp --permanent
