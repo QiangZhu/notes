@@ -5,14 +5,15 @@
     - help
     
       ```
-      
       git help
       ```
  
 	- 列出所有的分支
+    
         ···
 		git branch 
         ···
+        
 	- 创建名为<branch>的分支，但是不会切换过去
         ···
 		git branch <branch>
