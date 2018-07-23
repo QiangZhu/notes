@@ -1,5 +1,10 @@
 # Management
-## show 
+## show help category
+   ? contents
+   
+## optimize for table with blob and text column using MyIsam engine
+   optimize table table_name
+   
 ## innodb_flush_log_at_trx_commit
     show variables like 'innodb_flush_%';
 
