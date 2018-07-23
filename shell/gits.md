@@ -1,20 +1,16 @@
 # git common commands
 
-```
-function test() {
-  console.log("notice the blank line before this function?");
-}
-```
+
 
 ## 基本操作
 
     - help
     
-        ```
-        function test() {
-          console.log("notice the blank line before this function?");
-        }
-        ```
+```
+function test() {
+  console.log("notice the blank line before this function?");
+}
+```
     
       ```
       git help
