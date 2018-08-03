@@ -1,8 +1,0 @@
-#kafka
-1.
-  A:消息生产如何缩短提交到broker的时间？
-  Q: 生产采用无需broker确认的方式reqest.required.ack = 0
-2. 
-  A:如何处理消息积压？
-  Q: 增加topic的partition个数
-     减少log.retention.hours时长
