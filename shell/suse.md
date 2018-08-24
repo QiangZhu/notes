@@ -14,7 +14,14 @@
 	   su - 
 	   iptables -F
 	[How to enable ssh on startup in opensuse](https://serverfault.com/questions/766676/how-to-enable-ssh-on-startup-in-opensuse)
-   
+	
+# nodejs
+
+    check nodejs
+		npm --version
+	install
+	    zypper install nodejs
+		
 # MySQL
 	是否已安装MySQL
 		rpm -qa | grep mysql
