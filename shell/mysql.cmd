@@ -61,6 +61,10 @@
     and send_time like '2017-12-%' 
     and (JSON_EXTRACT(data,'$.channelType') = 3 or JSON_EXTRACT(data,'$.channelType') = 'sms_yxkk')
     limit 10
+	
+##  execute sql script
+
+    mysql> source D:\workspace\my\ideac\jeeplatform\db\jeeplatform.sql
 
 
 

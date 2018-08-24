@@ -2,11 +2,18 @@
     检查openssh
 		cat /etc/sysconfig/SuSEfirewall2.d/ |grep sshd
 		netstat -an | grep :22
+		which sshd
 	Enabling the SSHD Daemon
 		su -
 		systemctl enable sshd.service
 	To Start the Service
 		systemctl start sshd.service
+	To check firewall
+	    cat /etc/sysconfig/SuSEfirewall2 | grep sshd
+	To shutdown firewall
+	   su - 
+	   iptables -F
+	[How to enable ssh on startup in opensuse](https://serverfault.com/questions/766676/how-to-enable-ssh-on-startup-in-opensuse)
    
 # MySQL
 	是否已安装MySQL
