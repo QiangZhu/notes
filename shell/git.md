@@ -106,6 +106,10 @@
 ### git push without input user and password
 
     git config --global credential.helper wincred
+    
+### Issue
+    - HttpRequestException encountered
+      [Git Credential Manager for Windows v1.16.3](https://github.com/Microsoft/Git-Credential-Manager-for-Windows/releases/)
  
 ## Reference
    - [掘金-卡巴拉的数-git分支管理](https://juejin.im/post/5a3b14fc6fb9a04514643375)
