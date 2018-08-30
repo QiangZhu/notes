@@ -103,6 +103,10 @@
 		git merge new-feature
 		git branch -d new-feature
  
+### git push without input user and password
+
+    git config --global credential.helper wincred
+ 
 ## Reference
    - [掘金-卡巴拉的数-git分支管理](https://juejin.im/post/5a3b14fc6fb9a04514643375)
    - [Git 的基本操作、开发流程、实用技巧总结](https://www.tuicool.com/articles/IBbMNvN) 
