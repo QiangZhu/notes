@@ -99,16 +99,31 @@
 
 # network
 
-    - 获得外网IP
+  - 获得外网IP
     
         curl members.3322.org/dyndns/getip
         #查公网ip
         curl ifconfig.me
         curl icanhazip.com
 
-   - 查找ip路由
+  - 查找ip路由
    
         traceroute ifconfig.me
+	
+  - firewall
+
+     ```
+     systemctl disable firewalld
+	 systemctl stop firewalld
+	 
+	 sudo firewall-cmd --add-port=2376/tcp --permanent \
+	 && sudo firewall-cmd --add-port=2377/tcp --permanent \
+	 && sudo firewall-cmd --add-port=7946/tcp --permanent \
+	 && sudo firewall-cmd --add-port=7946/udp --permanent \
+	 && sudo firewall-cmd --add-port=4789/udp --permanent \
+	 && sudo firewall-cmd --reload \
+	 && sudo systemctl restart docker
+     ```	 
 
 # search
  
@@ -216,14 +231,14 @@
 
         gpg 
 
-#fail2ban 可以监控系统日志然后匹配日志的错误信息执行相应的屏蔽动作卡松email，sshd的系统日志/var/log/secure
+# fail2ban 可以监控系统日志然后匹配日志的错误信息执行相应的屏蔽动作卡松email，sshd的系统日志/var/log/secure
     vim /etc/fail2ban/jail.conf
     logpath = /var/log/secure
     findtime = 300 #时间范围300秒
     maxretry = 3   # 3次使用ssh尝试后失败
     bantime = 3600 #阻止3600秒
 
-#env 查询环境变量
+# env 查询环境变量
 
 # shell脚本中的双引号和单一好单引号的区别：赋值时没有区别 引用时存在区别,shell赋值时不允许有空格
     x=alphago
