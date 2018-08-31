@@ -256,7 +256,16 @@
     sudo netstat -antup|grep 80
 
 # gitlab
+
     gitlab-ctl start
     gitlab-ctl stop
     gitlab-ctl restart
+	
+# ntpdate
+
+  ```
+  ntpdate ntp1.aliyun.com	
+  ```
+ 
+   
 
