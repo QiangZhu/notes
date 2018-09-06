@@ -2,6 +2,11 @@
 
 ## ./kafka-topics.sh --help
 
+# windows
+  kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+  kafka-console-producer.bat --broker-list 127.0.0.1:9092 --topic test
+  kafka-console-consumer.bat --bootstrap-server 127.0.0.1:9092 --topic test
+
 # Topic
   
   kafka-topics.sh
