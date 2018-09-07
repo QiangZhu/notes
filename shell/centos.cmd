@@ -281,6 +281,11 @@
   ```
   ntpdate ntp1.aliyun.com	
   ```
+  
+# running backup process without nohup
+
+  nohup command </dev/null >/dev/null 2>&1 & # completely detached from terminal
+  - [nohup without nohup.out](https://stackoverflow.com/questions/10408816/how-do-i-use-the-nohup-command-without-getting-nohup-out)
  
    
 
