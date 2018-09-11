@@ -57,6 +57,8 @@
         jstack -l pid | grep tid的十六进制值 
     
    - storage
+   
+        df -ah
 
         du -h --max-depth=1 /
         
@@ -288,4 +290,6 @@
   - [nohup without nohup.out](https://stackoverflow.com/questions/10408816/how-do-i-use-the-nohup-command-without-getting-nohup-out)
  
    
+# reference
 
+  - [Expand a Hard Disk with Ubuntu LVM](https://www.geoffstratton.com/expand-hard-disk-ubuntu-lvm)
