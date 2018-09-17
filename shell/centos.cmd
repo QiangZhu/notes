@@ -39,6 +39,12 @@
         增加用户和设置密码
         useradd mk
         echo 123456 | passwd --stdin mk
+        
+        adduser tony
+        password tony
+        usermod -aG wheel username
+        
+        - [add user](https://www.digitalocean.com/community/tutorials/how-to-create-a-sudo-user-on-centos-quickstart )
   
 # performance
 
@@ -288,8 +294,23 @@
 
   nohup command </dev/null >/dev/null 2>&1 & # completely detached from terminal
   - [nohup without nohup.out](https://stackoverflow.com/questions/10408816/how-do-i-use-the-nohup-command-without-getting-nohup-out)
+  
+# add DNS
+
+   ```
+   vi /etc/resolv.conf
+   
+  nameserver 8.8.8.8 
+   
+   
+   ```
  
    
 # reference
 
   - [Expand a Hard Disk with Ubuntu LVM](https://www.geoffstratton.com/expand-hard-disk-ubuntu-lvm)
+  
+# issues
+
+  - [centos One of the configured repositories failed](https://stackoverflow.com/questions/32524675/centos-7-1-error-repository)
+  - [Could not resolve host: mirrorlist.centos.org Centos 7](https://serverfault.com/questions/904304/could-not-resolve-host-mirrorlist-centos-org-centos-7)
