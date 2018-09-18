@@ -37,3 +37,9 @@ mvn archetype:generate
 			</plugin>
 		</plugins>
 	</build>
+    
+ # install jar to local repository
+ 
+   ```
+   mvn install:install-file -Dfile=C:\Users\tony\git\github\fineract-cn-lang\build\libs\lang-0.1.0-BUILD-SNAPSHOT.jar -DgroupId=org.apache.fineract.cn -DartifactId=lang -Dversion=0.1.0-BUILD-SNAPSHOT -Dpackaging=jar
+   ```
