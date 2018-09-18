@@ -6,6 +6,10 @@
     
     卸载
     yum history undo <ID>
+    
+    yum-utils upgrade
+    
+    yum update && yum install yum-utils
   ```
   
 # common
