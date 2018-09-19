@@ -102,6 +102,11 @@
   - 赋予执行权限
     
         chmod +x ./xxx.sh
+# chown  
+
+  - 所有者 
+  
+        chwon user:group /dirpath
 
 # history
     
