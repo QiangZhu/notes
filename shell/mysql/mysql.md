@@ -16,7 +16,7 @@
     sudo mysql --user=root mysql
     UPDATE user SET password=PASSWORD('mysql') where USER='root';
     flush privileges;
-    sudo service mysql restart
+    sudo service mysqld restart
     
     mysql 5.7
     sudo yum localinstall http://repo.mysql.com/yum/mysql-5.7-community/el/7/x86_64/mysql57-community-release-el7-10.noarch.rpm

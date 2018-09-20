@@ -46,7 +46,11 @@
         
         adduser tony
         password tony
-        usermod -aG wheel username
+        # this is fucking 
+        usermod -aG wheel username 
+        
+        show owner
+            ls -l /path
         
         - [add user](https://www.digitalocean.com/community/tutorials/how-to-create-a-sudo-user-on-centos-quickstart )
   
