@@ -54,20 +54,25 @@
 
   - process
   
+        ```
         to kill process with pid file
-        kill `cat /mysql-data-directory/host_name.pid`
+        kill `cat /mysql-data-directory/host_name.pid
+        ```
 
   - cup
-    
+  
+        ```
         top
         sudo ls -l /proc/PID/exe
         ps -ef|grep ****
         ps p 3036 -L -o pcpu,pid,tid,time,tname,cmd
         printf "%x\n"  3046
         jstack -l pid | grep tid的十六进制值 
+        ```
     
    - storage
    
+        ```
         df -ah
 
         du -h --max-depth=1 /
@@ -82,6 +87,28 @@
         mkdir /temp/sda
         mkfs mkfs.ext4 /dev/sda
         mount /dev/sda /tmp/sda
+        ```
+        
+   - file system
+   
+       ```
+         view open file uppor bound
+         
+            ulimit -a 
+            
+         update open files uppor bound
+ 
+            ulimit -n
+
+          show opening files with proccess identity
+
+            lsof -p process-id
+            
+         
+         
+       
+       ```
+       
   
 # find
 
@@ -313,6 +340,18 @@
    
    
    ```
+   
+ # extract some lines from one file to the new file
+ 
+  ```
+    sed -n '16224,16482 p' orig-data-file > new-file
+  ```
+  
+# stat the summary number of lines of the file
+
+  ```
+    wc -l log.log
+  ```  
  
    
 # reference
