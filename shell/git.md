@@ -3,7 +3,7 @@
   ```
   与服务器端做比较
   git diff --stat local_branch origin/remote_branch
-  git diff --stat master origin/master
+  git diff --stat master origin/master 
   ```
 
 ## basic operation
