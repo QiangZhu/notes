@@ -111,7 +111,7 @@
  
 ### git push without input user and password
 
-    git config --global credential.helper wincred
+    [Caching github password](https://help.github.com/articles/caching-your-github-password-in-git )
     
 ### Issue
     - HttpRequestException encountered
